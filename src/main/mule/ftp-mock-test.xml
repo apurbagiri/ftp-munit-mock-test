@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd">
+	<flow name="ftp-mock-testFlow" doc:id="67a29745-7dc4-4f06-922d-918555e51851" >
+		<http:listener doc:name="Listener" doc:id="52e21df9-64bc-4da3-b844-f71fe4ed1a27" config-ref="HTTP_Listener_config" path="/test"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cfb73e5a-741f-4c38-b2c3-655bcde2e231" message='#["Inbound Request: " ++ payload]'/>
+		<sftp:list doc:name="List" doc:id="9ee78a6b-14bb-421f-a209-4e9cdc981ddb" config-ref="SFTP_Config" directoryPath="/"/>
+		<set-variable value="#[output application/java&#10;---&#10;payload.attributes.name]" doc:name="dirItems" doc:id="b3c6a41b-3e2e-45e1-b1d8-f243f6ee0902" variableName="dirItems"/>
+		<validation:is-true doc:name="Is true" doc:id="56c03ca2-8984-45e3-83c2-36de69aeabab" expression="#[sizeOf(vars.dirItems) &gt; 0]" message="#[&quot;Directory doesn't contain items&quot;]"/>
+		<ee:transform doc:name="Transform Message" doc:id="28656b10-2784-4d49-b90a-d719b655c0be" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"dirItems" : vars.dirItems]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="no-ftp-flow" doc:id="342cc4e7-97b9-49fa-bb71-8bc03840b7ff" >
+		<logger level="INFO" doc:name="Logger" doc:id="12ff04cd-a3a3-40fc-a1f7-90f18b4e9e70" message="NO SFTP COMPONENTS IN THIS FLOW"/>
+		<set-variable value='#["test123"]' doc:name="randomVar" doc:id="7a3b10a7-978f-4308-b941-fb1e532837e9" variableName="randomVar"/>
+		<validation:is-true doc:name="Is true" doc:id="c88cf50f-1020-43f6-a987-77ca2d79fd8b" expression="#[vars.randomVar != null]"/>
+		<ee:transform doc:name="Transform Message" doc:id="fb2245ef-765c-4f4e-a395-15bacc8f0101" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Success"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
